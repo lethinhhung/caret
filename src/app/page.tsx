@@ -34,6 +34,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { applyFixes, errorId } from "@/lib/errors";
+import { SITE_TAGLINE } from "@/lib/site";
 import {
   MAX_CONTENT_LENGTH,
   MAX_CONTEXT_LENGTH,
@@ -216,7 +217,7 @@ export default function Home() {
               Caret
             </h1>
             <p className="text-sm text-muted-foreground">
-              Paste your text, inspect every fix, keep the ones you want.
+              {SITE_TAGLINE}
             </p>
           </div>
           <ThemeToggle />
