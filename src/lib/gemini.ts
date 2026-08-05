@@ -7,7 +7,11 @@ import { ERROR_CATEGORIES } from "./types";
  * module that reaches the client bundle.
  */
 
-const MODEL = "gemini-2.5-flash-lite";
+// specs/core.md names gemini-2.5-flash-lite, but Google retired it for projects
+// that were not already calling it ("no longer available to new users"). This is
+// its current-generation equivalent and has the most generous free-tier quota of
+// the lite models: 15 RPM / 250K TPM / 500 RPD.
+const MODEL = "gemini-3.1-flash-lite";
 const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
 
 /** Raw shape we ask the model for. Offsets are re-derived server-side anyway. */

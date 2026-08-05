@@ -212,8 +212,8 @@ export default function Home() {
       <header className="border-b border-border">
         <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
           <div className="min-w-0">
-            <h1 className="font-heading text-xl font-semibold tracking-tight sm:text-2xl">
-              Grammar Check
+            <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
+              Caret
             </h1>
             <p className="text-sm text-muted-foreground">
               Paste your text, inspect every fix, keep the ones you want.
@@ -318,7 +318,7 @@ export default function Home() {
                 />
                 <div className="flex flex-col items-start gap-3">
                   <div className="flex flex-col gap-1">
-                    <h2 className="font-heading text-base font-semibold">
+                    <h2 className="text-base font-semibold">
                       That check did not go through
                     </h2>
                     <p className="text-sm text-muted-foreground">{failure}</p>
@@ -343,7 +343,7 @@ export default function Home() {
             (outcome.result.status === "has_errors" ? (
               <Card>
                 <CardHeader>
-                  <h2 className="font-heading text-base font-semibold">
+                  <h2 className="text-base font-semibold">
                     {errors.length} {errors.length === 1 ? "issue" : "issues"} found
                   </h2>
                   <CardDescription>
@@ -420,7 +420,7 @@ export default function Home() {
             ) : (
               <Card>
                 <CardHeader>
-                  <h2 className="flex items-center gap-2 font-heading text-base font-semibold">
+                  <h2 className="flex items-center gap-2 text-base font-semibold">
                     <CircleCheck className="size-5 text-primary" aria-hidden />
                     Looks good
                   </h2>

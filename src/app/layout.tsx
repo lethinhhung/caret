@@ -1,18 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Lexend, Source_Sans_3, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-// Design system pairing: Lexend for headings, Source Sans 3 for body.
+// shadcn/ui's default pairing: Geist for everything, Geist Mono alongside it.
 // `display: swap` avoids invisible text while the webfont loads.
-const lexend = Lexend({
-  variable: "--font-lexend",
-  subsets: ["latin"],
-  display: "swap",
-  weight: ["500", "600", "700"],
-});
-
-const sourceSans = Source_Sans_3({
-  variable: "--font-source-sans",
+const geistSans = Geist({
+  variable: "--font-geist-sans",
   subsets: ["latin"],
   display: "swap",
 });
@@ -24,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Grammar Check — fast, focused proofreading",
+  title: "Caret — fast, focused proofreading",
   description:
     "Paste your text, add optional context, and get inline grammar, spelling, punctuation, and style corrections you can inspect and apply one at a time.",
 };
@@ -34,8 +27,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   // No maximumScale/userScalable — pinch zoom must stay available.
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#F0FDFA" },
-    { media: "(prefers-color-scheme: dark)", color: "#0B1F1E" },
+    { media: "(prefers-color-scheme: light)", color: "#FFFFFF" },
+    { media: "(prefers-color-scheme: dark)", color: "#0A0A0A" },
   ],
 };
 
@@ -43,7 +36,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${lexend.variable} ${sourceSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>
