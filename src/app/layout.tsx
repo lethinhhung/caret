@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 // shadcn/ui's default pairing: Geist for everything, Geist Mono alongside it.
@@ -51,7 +52,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           }}
         />
       </head>
-      <body className="flex min-h-full flex-col">{children}</body>
+      <body className="flex min-h-full flex-col">
+        {children}
+        {/*
+         * Page views only — it never sees the text being checked. Inert outside
+         * Vercel, so local dev and any self-host stay unaffected.
+         */}
+        <Analytics />
+      </body>
     </html>
   );
 }
