@@ -30,7 +30,7 @@ export function DiffView({ before, after }: { before: string; after: string }) {
           return (
             <del
               key={index}
-              className="rounded-sm bg-grammar-tint px-0.5 text-foreground decoration-grammar decoration-2"
+              className="rounded-[0.3rem] bg-grammar-tint px-0.5 text-foreground decoration-grammar decoration-2"
             >
               <span className="sr-only">removed: </span>
               {part.text}
@@ -41,7 +41,7 @@ export function DiffView({ before, after }: { before: string; after: string }) {
         return (
           <ins
             key={index}
-            className="rounded-sm bg-secondary px-0.5 text-secondary-foreground no-underline"
+            className="rounded-[0.3rem] bg-secondary px-0.5 text-secondary-foreground no-underline"
           >
             <span className="sr-only">added: </span>
             {part.text}

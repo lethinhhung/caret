@@ -11,7 +11,6 @@ import {
 import {
   Check,
   CircleAlert,
-  CircleCheck,
   Copy,
   LoaderCircle,
   RotateCcw,
@@ -20,7 +19,9 @@ import {
   WandSparkles,
 } from "lucide-react";
 import { AnnotatedText, CategoryLegend } from "@/components/annotated-text";
+import { CaretMark } from "@/components/caret-mark";
 import { DiffView } from "@/components/diff-view";
+import { SegmentedTabs } from "@/components/segmented-tabs";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,7 +32,7 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { applyFixes, errorId } from "@/lib/errors";
 import { SITE_TAGLINE } from "@/lib/site";
@@ -55,6 +56,12 @@ interface Outcome {
 
 const GENERIC_FAILURE = "Something went wrong. Try again.";
 
+const VIEWS = [
+  { value: "annotated", label: "Annotated" },
+  { value: "corrected", label: "Corrected" },
+  { value: "diff", label: "Diff" },
+];
+
 /**
  * The modifier key label for the Check shortcut. It can only be read on the
  * client, so the server snapshot is `null` and the hint appears after
@@ -74,6 +81,9 @@ export default function Home() {
   const [failure, setFailure] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [copyError, setCopyError] = useState<string | null>(null);
+  const [view, setView] = useState(VIEWS[0].value);
+  /** Bumped per check so each result animates in as a new object. */
+  const [runId, setRunId] = useState(0);
 
   const shortcut = useSyncExternalStore(noopSubscribe, readShortcut, noShortcut);
 
@@ -103,6 +113,7 @@ export default function Home() {
     setFailure(null);
     setCopyError(null);
     setCopiedKey(null);
+    setView(VIEWS[0].value);
 
     try {
       const response = await fetch("/api/check", {
@@ -113,6 +124,7 @@ export default function Home() {
       });
 
       const payload: unknown = await response.json();
+      setRunId((current) => current + 1);
 
       if (!response.ok) {
         const { error } = (payload ?? {}) as CheckErrorResponse;
@@ -127,6 +139,7 @@ export default function Home() {
       setApplied(new Set(result.errors.map(errorId)));
     } catch (cause) {
       if (cause instanceof DOMException && cause.name === "AbortError") return;
+      setRunId((current) => current + 1);
       setFailure(
         "Could not reach the grammar service. Check your connection and try again.",
       );
@@ -210,50 +223,50 @@ export default function Home() {
 
   return (
     <>
-      <header className="border-b border-border">
-        <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
-          <div className="min-w-0">
-            <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
-              Caret
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              {SITE_TAGLINE}
-            </p>
-          </div>
-          <ThemeToggle />
-        </div>
-      </header>
+      <SiteHeader />
 
-      <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 sm:py-8">
+      <main className="mx-auto w-full max-w-3xl flex-1 px-4 pt-8 pb-12 sm:px-6 sm:pt-12">
+        <div className="mb-7 flex flex-col gap-2.5 sm:mb-9">
+          <h1 className="text-display text-balance">
+            Grammar, spelling, and style — checked in place.
+          </h1>
+          <p className="text-pretty text-muted-foreground sm:text-[1.0625rem]">
+            {SITE_TAGLINE}
+          </p>
+        </div>
+
+        {/*
+         * One surface, two fields and the action — the composer is the page's
+         * centre of gravity, so nothing else competes with it for weight.
+         */}
         <form
-          className="flex flex-col gap-5"
+          className="surface overflow-hidden rounded-2xl"
           onSubmit={(event) => {
             event.preventDefault();
             void runCheck();
           }}
         >
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="context" className="text-sm font-medium">
-              Context{" "}
-              <span className="font-normal text-muted-foreground">(optional)</span>
+          <div className="flex flex-col gap-1 px-4 pt-3.5 pb-3 sm:px-5">
+            <label htmlFor="context" className="text-label text-muted-foreground">
+              Context <span className="font-normal">(optional)</span>
             </label>
             <Textarea
               id="context"
-              rows={2}
+              rows={1}
               maxLength={MAX_CONTEXT_LENGTH}
               value={context}
               onChange={(event) => setContext(event.target.value)}
               placeholder="A formal email to a client"
               aria-describedby="context-help"
-              className="max-h-32 text-base"
+              className="max-h-24 min-h-0 resize-none rounded-none border-0 bg-transparent p-0 text-base md:text-base focus-visible:border-transparent focus-visible:ring-0 dark:bg-transparent"
             />
-            <p id="context-help" className="text-xs text-muted-foreground">
+            <p id="context-help" className="text-caption text-muted-foreground">
               Who you are writing for, so tone and word choice are judged against it.
             </p>
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="content" className="text-sm font-medium">
+          <div className="hairline-t flex flex-col gap-1.5 px-4 pt-3.5 pb-4 sm:px-5">
+            <label htmlFor="content" className="text-label text-muted-foreground">
               Your text
             </label>
             <Textarea
@@ -264,41 +277,51 @@ export default function Home() {
               placeholder="Paste or write the text you want checked."
               aria-describedby="content-count"
               aria-invalid={overLimit || undefined}
-              className="max-h-[55vh] min-h-48 text-base leading-7"
+              className="max-h-[50vh] min-h-44 resize-none rounded-none border-0 bg-transparent p-0 text-base md:text-base leading-7 focus-visible:border-transparent focus-visible:ring-0 dark:bg-transparent"
             />
+          </div>
+
+          {/*
+           * The action bar is a floating layer, not another band of the form:
+           * the text scrolls up to it and it stays legible over whatever lands
+           * underneath.
+           */}
+          <div className="hairline-t material-chrome flex flex-wrap items-center gap-x-4 gap-y-3 px-4 py-3 sm:px-5">
             <p
               id="content-count"
               className={cn(
-                "text-xs tabular-nums",
+                "text-caption flex items-center gap-2 tabular-nums",
                 overLimit ? "font-medium text-destructive" : "text-muted-foreground",
               )}
             >
-              {content.length.toLocaleString()} /{" "}
-              {MAX_CONTENT_LENGTH.toLocaleString()} characters
-              {overLimit && " — trim it before checking"}
-            </p>
-          </div>
-
-          <div className="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-2">
-            <Button type="submit" className="h-11 px-5 text-base" disabled={!canCheck}>
-              {isChecking ? (
-                <LoaderCircle className="size-4 animate-spin" aria-hidden />
-              ) : (
-                <WandSparkles className="size-4" aria-hidden />
-              )}
-              {isChecking ? "Checking…" : "Check"}
-            </Button>
-            {shortcut && (
-              <span className="text-xs text-muted-foreground">
-                or press{" "}
-                <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 font-sans text-[0.7rem] font-medium">
-                  {shortcut}
-                </kbd>{" "}
-                <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 font-sans text-[0.7rem] font-medium">
-                  ↵
-                </kbd>
+              <CountRing used={content.length / MAX_CONTENT_LENGTH} />
+              <span>
+                {content.length.toLocaleString()} /{" "}
+                {MAX_CONTENT_LENGTH.toLocaleString()}
+                {overLimit && " — trim it before checking"}
               </span>
-            )}
+            </p>
+
+            <div className="ml-auto flex items-center gap-3">
+              {shortcut && (
+                <span className="text-caption hidden items-center gap-1 text-muted-foreground sm:flex">
+                  <Kbd>{shortcut}</Kbd>
+                  <Kbd>↵</Kbd>
+                </span>
+              )}
+              <Button
+                type="submit"
+                className="h-11 rounded-full px-5 text-[0.9375rem]"
+                disabled={!canCheck}
+              >
+                {isChecking ? (
+                  <LoaderCircle className="size-4 animate-spin" aria-hidden />
+                ) : (
+                  <WandSparkles className="size-4" aria-hidden />
+                )}
+                {isChecking ? "Checking…" : "Check"}
+              </Button>
+            </div>
           </div>
         </form>
 
@@ -307,27 +330,27 @@ export default function Home() {
           {status}
         </p>
 
-        <div ref={resultsRef} className="mt-8 scroll-mt-6">
+        <div ref={resultsRef} className="mt-8 scroll-mt-20" key={runId}>
           {isChecking && <ResultsSkeleton />}
 
           {!isChecking && failure && (
-            <Card className="ring-destructive/30">
-              <CardContent className="flex items-start gap-3">
-                <TriangleAlert
-                  className="mt-0.5 size-5 shrink-0 text-destructive"
-                  aria-hidden
-                />
-                <div className="flex flex-col items-start gap-3">
+            <Card className="materialize">
+              <CardContent className="flex items-start gap-3.5">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-destructive/10">
+                  <TriangleAlert
+                    className="size-[1.125rem] text-destructive"
+                    aria-hidden
+                  />
+                </span>
+                <div className="flex flex-col items-start gap-3.5">
                   <div className="flex flex-col gap-1">
-                    <h2 className="text-base font-semibold">
-                      That check did not go through
-                    </h2>
+                    <h2 className="text-title">That check did not go through</h2>
                     <p className="text-sm text-muted-foreground">{failure}</p>
                   </div>
                   <Button
                     type="button"
                     variant="outline"
-                    className="h-11"
+                    className="h-11 rounded-full px-4"
                     onClick={() => void runCheck()}
                     disabled={!canCheck}
                   >
@@ -342,9 +365,9 @@ export default function Home() {
             !failure &&
             outcome &&
             (outcome.result.status === "has_errors" ? (
-              <Card>
+              <Card className="materialize">
                 <CardHeader>
-                  <h2 className="text-base font-semibold">
+                  <h2 className="text-title">
                     {errors.length} {errors.length === 1 ? "issue" : "issues"} found
                   </h2>
                   <CardDescription>
@@ -354,14 +377,14 @@ export default function Home() {
                 </CardHeader>
 
                 <CardContent>
-                  <Tabs defaultValue="annotated" className="gap-4">
-                    <TabsList className="w-full">
-                      <TabsTrigger value="annotated">Annotated</TabsTrigger>
-                      <TabsTrigger value="corrected">Corrected</TabsTrigger>
-                      <TabsTrigger value="diff">Diff</TabsTrigger>
-                    </TabsList>
+                  <Tabs value={view} onValueChange={setView} className="gap-4">
+                    <SegmentedTabs
+                      segments={VIEWS}
+                      value={view}
+                      onValueChange={setView}
+                    />
 
-                    <TabsContent value="annotated" className="flex flex-col gap-3">
+                    <TabsContent value="annotated" className="flex flex-col gap-3.5">
                       <CategoryLegend errors={errors} />
                       <AnnotatedText
                         content={outcome.content}
@@ -383,11 +406,11 @@ export default function Home() {
                   </Tabs>
                 </CardContent>
 
-                <CardFooter className="flex-col items-stretch gap-3 border-t pt-4">
+                <CardFooter className="flex-col items-stretch gap-3">
                   <div className="flex flex-wrap items-center gap-2">
                     <Button
                       type="button"
-                      className="h-11"
+                      className="h-11 rounded-full px-4"
                       onClick={() => void copy(corrected, "corrected")}
                     >
                       {copiedKey === "corrected" ? (
@@ -400,7 +423,7 @@ export default function Home() {
                     <Button
                       type="button"
                       variant="outline"
-                      className="h-11"
+                      className="h-11 rounded-full px-4"
                       onClick={toggleAll}
                     >
                       {allApplied ? (
@@ -410,44 +433,48 @@ export default function Home() {
                       )}
                       {allApplied ? "Revert all" : "Apply all"}
                     </Button>
-                    <span className="text-xs tabular-nums text-muted-foreground sm:ml-auto">
+                    <span className="text-caption tabular-nums text-muted-foreground sm:ml-auto">
                       {applied.size} of {errors.length} applied
                     </span>
                   </div>
-                  {copyError && <p className="text-xs text-destructive">{copyError}</p>}
+                  {copyError && (
+                    <p className="text-caption text-destructive">{copyError}</p>
+                  )}
                   {isStale && <StaleNotice />}
                 </CardFooter>
               </Card>
             ) : (
-              <Card>
-                <CardHeader>
-                  <h2 className="flex items-center gap-2 text-base font-semibold">
-                    <CircleCheck className="size-5 text-primary" aria-hidden />
-                    Looks good
-                  </h2>
-                  <CardDescription>
-                    No grammar, spelling, punctuation, or word-choice problems found.
-                  </CardDescription>
+              <Card className="materialize">
+                <CardHeader className="gap-2.5">
+                  <span className="pop-in flex size-11 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                    <Check className="size-5.5" strokeWidth={2.5} aria-hidden />
+                  </span>
+                  <div className="flex flex-col gap-1">
+                    <h2 className="text-title">Looks good</h2>
+                    <CardDescription>
+                      No grammar, spelling, punctuation, or word-choice problems found.
+                    </CardDescription>
+                  </div>
                 </CardHeader>
 
                 {(outcome.result.improvements?.length ?? 0) > 0 && (
-                  <CardContent className="flex flex-col gap-3">
-                    <h3 className="flex items-center gap-2 text-sm font-medium">
-                      <Sparkles className="size-4 text-accent" aria-hidden />
+                  <CardContent className="flex flex-col gap-2.5">
+                    <h3 className="text-label flex items-center gap-1.5 text-muted-foreground">
+                      <Sparkles className="size-3.5 text-style" aria-hidden />
                       Sharper ways to say it
                     </h3>
                     <ul className="flex flex-col gap-2">
                       {outcome.result.improvements?.map((improvement, index) => (
                         <li
                           key={index}
-                          className="flex items-start gap-2 rounded-lg bg-muted p-3"
+                          className="flex items-start gap-2 rounded-xl bg-muted/70 p-3 pl-3.5"
                         >
                           <p className="flex-1 text-sm leading-6">{improvement}</p>
                           <Button
                             type="button"
                             variant="ghost"
                             size="icon"
-                            className="size-11 shrink-0"
+                            className="size-9 shrink-0 rounded-full"
                             onClick={() => void copy(improvement, `variant-${index}`)}
                             aria-label={`Copy variant ${index + 1}`}
                           >
@@ -463,12 +490,12 @@ export default function Home() {
                   </CardContent>
                 )}
 
-                <CardFooter className="flex-col items-stretch gap-3 border-t pt-4">
+                <CardFooter className="flex-col items-stretch gap-3">
                   <div>
                     <Button
                       type="button"
                       variant="outline"
-                      className="h-11"
+                      className="h-11 rounded-full px-4"
                       onClick={() => void copy(outcome.content, "original")}
                     >
                       {copiedKey === "original" ? (
@@ -479,14 +506,16 @@ export default function Home() {
                       {copiedKey === "original" ? "Copied" : "Copy your text"}
                     </Button>
                   </div>
-                  {copyError && <p className="text-xs text-destructive">{copyError}</p>}
+                  {copyError && (
+                    <p className="text-caption text-destructive">{copyError}</p>
+                  )}
                   {isStale && <StaleNotice />}
                 </CardFooter>
               </Card>
             ))}
 
           {!isChecking && !failure && !outcome && (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-caption px-1 text-muted-foreground">
               Results appear here. Nothing you type is stored.
             </p>
           )}
@@ -496,9 +525,90 @@ export default function Home() {
   );
 }
 
+/**
+ * Floating chrome: translucent, with the page passing underneath it. The
+ * hairline exists only while there is content beneath the bar to separate it
+ * from — a sentinel at the top of the document decides when.
+ */
+function SiteHeader() {
+  const sentinel = useRef<HTMLDivElement>(null);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const target = sentinel.current;
+    if (!target || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setScrolled(!entry.isIntersecting),
+      { threshold: 1 },
+    );
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <>
+      <div ref={sentinel} aria-hidden className="absolute top-0 h-px w-px" />
+      <header
+        className="material-chrome scroll-edge sticky top-0 z-40"
+        data-scrolled={scrolled}
+      >
+        <div className="mx-auto flex h-14 w-full max-w-3xl items-center justify-between gap-4 px-4 sm:px-6">
+          <span className="flex items-center gap-2.5">
+            <CaretMark />
+            <span className="text-title">Caret</span>
+          </span>
+          <ThemeToggle />
+        </div>
+      </header>
+    </>
+  );
+}
+
+/**
+ * How full the box is, as a ring. It carries no information the count beside it
+ * does not, but it answers "am I close?" without anyone reading two numbers.
+ */
+function CountRing({ used }: { used: number }) {
+  const radius = 6;
+  const circumference = 2 * Math.PI * radius;
+  const filled = Math.min(1, Math.max(0, used));
+
+  return (
+    <svg viewBox="0 0 16 16" className="size-4 shrink-0 -rotate-90" aria-hidden>
+      <circle
+        cx="8"
+        cy="8"
+        r={radius}
+        fill="none"
+        strokeWidth="2"
+        className="stroke-current opacity-20"
+      />
+      <circle
+        cx="8"
+        cy="8"
+        r={radius}
+        fill="none"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeDasharray={circumference}
+        strokeDashoffset={circumference * (1 - filled)}
+        className="stroke-current transition-[stroke-dashoffset] duration-spring-snappy ease-spring"
+      />
+    </svg>
+  );
+}
+
+function Kbd({ children }: { children: React.ReactNode }) {
+  return (
+    <kbd className="flex h-5 min-w-5 items-center justify-center rounded-[0.3rem] bg-muted px-1 font-sans text-[0.6875rem] font-medium text-muted-foreground ring-1 ring-border">
+      {children}
+    </kbd>
+  );
+}
+
 function StaleNotice() {
   return (
-    <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+    <p className="text-caption flex items-center gap-1.5 text-muted-foreground">
       <CircleAlert className="size-3.5 shrink-0" aria-hidden />
       You have edited the text since this check. Run it again to refresh.
     </p>
@@ -514,7 +624,7 @@ function ResultsSkeleton() {
         <Skeleton className="h-4 w-64 max-w-full" />
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-10 w-full rounded-full" />
         <div className="flex flex-col gap-2.5">
           <Skeleton className="h-4 w-full" />
           <Skeleton className="h-4 w-[92%]" />
@@ -522,9 +632,9 @@ function ResultsSkeleton() {
           <Skeleton className="h-4 w-[64%]" />
         </div>
       </CardContent>
-      <CardFooter className="gap-2 border-t pt-4">
-        <Skeleton className="h-11 w-40" />
-        <Skeleton className="h-11 w-28" />
+      <CardFooter className="gap-2">
+        <Skeleton className="h-11 w-40 rounded-full" />
+        <Skeleton className="h-11 w-28 rounded-full" />
       </CardFooter>
     </Card>
   );

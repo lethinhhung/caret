@@ -50,10 +50,13 @@ function ErrorSpan({
         // `inline` (not inline-block) so a multi-word span still wraps with
         // the paragraph instead of being pushed to its own line.
         className={cn(
-          "inline cursor-pointer rounded-sm px-0.5 underline decoration-2 underline-offset-4 transition-colors",
+          "inline cursor-pointer rounded-[0.3rem] px-0.5 underline decoration-2 underline-offset-4",
+          // Colour responds on press, not on release — the popover takes a
+          // frame or two to arrive and the mark must not look inert until then.
+          "transition-colors duration-press ease-spring-snappy active:brightness-95 dark:active:brightness-110",
           "focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-2 focus-visible:outline-ring",
           isApplied
-            ? "bg-secondary text-secondary-foreground decoration-primary decoration-solid"
+            ? "bg-secondary text-secondary-foreground decoration-primary/50 decoration-solid"
             : style.mark,
         )}
         aria-label={
@@ -73,22 +76,22 @@ function ErrorSpan({
         )}
       </PopoverTrigger>
 
-      <PopoverContent align="start" className="w-80">
+      <PopoverContent align="start" className="w-80 gap-3 p-3">
         <div className="flex items-center gap-2">
-          <Badge className={cn("border-transparent", style.badge)}>
+          <Badge className={cn("h-5.5 border-transparent px-2.5", style.badge)}>
             {style.label}
           </Badge>
           {isApplied && (
-            <span className="inline-flex items-center gap-1 text-xs font-medium text-primary">
+            <span className="text-caption inline-flex items-center gap-1 font-medium">
               <Check className="size-3" aria-hidden />
               Applied
             </span>
           )}
         </div>
 
-        <p className="text-sm text-muted-foreground">{error.explanation}</p>
+        <p className="text-sm leading-6 text-muted-foreground">{error.explanation}</p>
 
-        <p className="flex flex-wrap items-baseline gap-x-2 gap-y-1 rounded-md bg-muted px-2 py-1.5 text-sm">
+        <p className="flex flex-wrap items-baseline gap-x-2 gap-y-1 rounded-lg bg-muted px-2.5 py-2 text-sm">
           <span className="text-muted-foreground line-through">
             <Literal value={error.original} />
           </span>
@@ -103,7 +106,7 @@ function ErrorSpan({
         <Button
           type="button"
           variant={isApplied ? "outline" : "default"}
-          className="h-11 w-full"
+          className="h-11 w-full rounded-full"
           onClick={onToggle}
         >
           {isApplied ? (
@@ -161,21 +164,26 @@ export function CategoryLegend({ errors }: { errors: GrammarError[] }) {
   );
 
   return (
-    <ul className="flex flex-wrap gap-x-4 gap-y-1.5">
+    <ul className="flex flex-wrap gap-1.5">
       {present.map((category) => {
         const style = CATEGORY_STYLES[category];
         const count = errors.filter((error) => error.category === category).length;
         return (
-          <li key={category} className="text-xs text-muted-foreground">
+          <li
+            key={category}
+            className={cn(
+              "text-caption inline-flex items-center gap-1.5 rounded-full px-2.5 py-1",
+              style.badge,
+            )}
+          >
             <span
-              className={cn(
-                "underline decoration-2 underline-offset-4",
-                style.rule,
-              )}
+              className={cn("underline decoration-2 underline-offset-[3px]", style.rule)}
             >
               {style.label}
             </span>{" "}
-            <span className="tabular-nums">{count}</span>
+            {/* A real space: the label and its count read as one phrase to a
+                screen reader, and flex drops whitespace-only nodes visually. */}
+            <span className="tabular-nums opacity-70">{count}</span>
           </li>
         );
       })}

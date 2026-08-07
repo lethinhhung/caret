@@ -5,18 +5,23 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Base palette and fonts are shadcn/ui's defaults (neutral + Geist), untouched.
+ * The design system, in four parts: colour, material, motion, and type.
  *
- * The four category tokens below are ours — shadcn has no equivalent, and the
- * spec fixes their hues. Each is verified >= 4.5:1 against both the card and its
- * own tint, in both themes.
+ * Colour keeps shadcn's semantic token names, retuned to a grouped-background
+ * model — the page is a soft neutral and every surface that holds content sits
+ * on top of it in white (or near-black), so depth comes from elevation rather
+ * than from borders. The four category tokens are ours and their hues are fixed
+ * by the spec; each is verified >= 4.5:1 against both the card and its own tint,
+ * in both themes, so they are deliberately left untouched here.
+ *
+ * Material, motion and type tokens are defined below their colour counterparts.
  */
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-app-sans);
+  --font-mono: var(--font-app-mono);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -44,6 +49,15 @@
   --color-style: var(--style);
   --color-style-tint: var(--style-tint);
 
+  /*
+   * Elevation, not outlines. Bigger surfaces read as thicker: more blur, more
+   * spread, a longer shadow. The values themselves are theme-dependent — dark
+   * mode leans on a bright top edge instead, since shadows barely register.
+   */
+  --shadow-e1: var(--elevation-1);
+  --shadow-e2: var(--elevation-2);
+  --shadow-e3: var(--elevation-3);
+
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -53,27 +67,94 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-:root {
-  --radius: 0.625rem;
+/*
+ * Motion.
+ *
+ * Every easing here is a real spring, sampled into a CSS `linear()` curve, so a
+ * plain transition reproduces the exact shape of a damped oscillator. Springs
+ * are described the way Apple describes them — a damping ratio and a response
+ * time — not as mass/stiffness/damping:
+ *
+ *   spring         damping 1.0, response 0.4s  — the default. No overshoot.
+ *   spring-snappy  damping 1.0, response 0.25s — presses and small state flips.
+ *   spring-bounce  damping 0.8, response 0.4s  — only after momentum (a flick).
+ *
+ * Each duration is the curve's own settle time, so the transition ends exactly
+ * when the spring does. Generated, not guessed.
+ */
+@theme {
+  --ease-spring: linear(
+    0, 0.0278, 0.0942, 0.1804, 0.2739, 0.3671, 0.4553, 0.536, 0.608, 0.6712,
+    0.7259, 0.7727, 0.8123, 0.8456, 0.8735, 0.8967, 0.9158, 0.9316, 0.9445,
+    0.9551, 0.9638, 0.9708, 0.9765, 0.9811, 0.9848, 0.9879, 0.9903, 0.9922,
+    0.9938, 0.995, 0.996, 0.9969, 0.9975, 0.998, 0.9984, 0.9987, 1
+  );
+  --ease-spring-snappy: linear(
+    0, 0.0279, 0.0944, 0.1807, 0.2744, 0.3677, 0.456, 0.5367, 0.6088, 0.672,
+    0.7266, 0.7733, 0.8129, 0.8462, 0.874, 0.8971, 0.9162, 0.9319, 0.9448,
+    0.9554, 0.964, 0.971, 0.9766, 0.9812, 0.985, 0.9879, 0.9904, 0.9923, 0.9938,
+    0.9951, 0.9961, 0.9969, 0.9975, 0.998, 0.9984, 0.9988, 1
+  );
+  --ease-spring-bounce: linear(
+    0, 0.0245, 0.0862, 0.1705, 0.2666, 0.3663, 0.4638, 0.5554, 0.6387, 0.7125,
+    0.7763, 0.8304, 0.8753, 0.9118, 0.941, 0.9637, 0.9809, 0.9936, 1.0026,
+    1.0087, 1.0124, 1.0144, 1.0151, 1.0149, 1.0141, 1.0129, 1.0115, 1.0099,
+    1.0085, 1.007, 1.0057, 1.0046, 1.0036, 1.0027, 1.002, 1.0014, 1
+  );
 
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  --duration-spring: 588ms;
+  --duration-spring-snappy: 368ms;
+  --duration-spring-bounce: 540ms;
+  /* Press feedback has to land inside the same perceptual instant as the tap. */
+  --duration-press: 110ms;
+}
+
+:root {
+  --radius: 0.75rem;
+
+  --font-app-sans:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji";
+  --font-app-mono:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono",
+    monospace;
+
+  --background: oklch(0.9702 0.0021 264.54);
+  --foreground: oklch(0.1607 0.0041 264.54);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: oklch(0.1607 0.0041 264.54);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --popover-foreground: oklch(0.1607 0.0041 264.54);
+  --primary: oklch(0.2178 0.006 264.54);
+  --primary-foreground: oklch(0.9911 0 0);
+  --secondary: oklch(0.9551 0.0032 264.54);
+  --secondary-foreground: oklch(0.2178 0.006 264.54);
+  --muted: oklch(0.9551 0.0032 264.54);
+  --muted-foreground: oklch(0.5152 0.0081 264.54); /* 5.60:1 on card, 5.13:1 on the page */
+  --accent: oklch(0.9551 0.0032 264.54);
+  --accent-foreground: oklch(0.2178 0.006 264.54);
+  --destructive: oklch(0.5482 0.2235 27.32); /* 5.47:1 on card, 5.01:1 on the page */
+  --border: oklch(0.9081 0.0043 264.54);
+  --input: oklch(0.8942 0.0043 264.54);
+  --ring: oklch(0.6291 0.0104 264.54);
+
+  /* Translucent chrome: the toolbar layer content passes underneath. */
+  --chrome: oklch(0.9702 0.0021 264.54 / 0.72);
+  --chrome-blur: 24px;
+  /* Bright top edge — light catching the leading face of the material. */
+  --chrome-edge: oklch(1 0 0 / 0.6);
+
+  --elevation-1:
+    0 1px 2px oklch(0.16 0.004 264.54 / 0.06),
+    0 1px 1px oklch(0.16 0.004 264.54 / 0.04);
+  --elevation-2:
+    0 1px 2px oklch(0.16 0.004 264.54 / 0.05),
+    0 10px 24px -10px oklch(0.16 0.004 264.54 / 0.14);
+  --elevation-3:
+    0 2px 4px oklch(0.16 0.004 264.54 / 0.05),
+    0 28px 56px -20px oklch(0.16 0.004 264.54 / 0.2);
+  --hairline: oklch(0.16 0.004 264.54 / 0.08);
 
   --grammar: oklch(0.5054 0.1905 27.52); /* #B91C1C — 6.47:1 */
   --grammar-tint: oklch(0.9356 0.0309 17.72); /* #FEE2E2 */
@@ -86,24 +167,37 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
+  --background: oklch(0.1448 0.0041 264.54);
+  --foreground: oklch(0.9851 0 0);
+  --card: oklch(0.2059 0.005 264.54);
+  --card-foreground: oklch(0.9851 0 0);
+  --popover: oklch(0.2394 0.005 264.54);
+  --popover-foreground: oklch(0.9851 0 0);
+  --primary: oklch(0.9219 0 0);
+  --primary-foreground: oklch(0.2059 0.005 264.54);
+  --secondary: oklch(0.2686 0.005 264.54);
+  --secondary-foreground: oklch(0.9851 0 0);
+  --muted: oklch(0.2686 0.005 264.54);
+  --muted-foreground: oklch(0.7118 0.008 264.54);
+  --accent: oklch(0.2686 0.005 264.54);
+  --accent-foreground: oklch(0.9851 0 0);
+  --destructive: oklch(0.7044 0.191 22.22);
+  --border: oklch(1 0 0 / 0.1);
+  --input: oklch(1 0 0 / 0.15);
   --ring: oklch(0.556 0 0);
+
+  --chrome: oklch(0.1448 0.0041 264.54 / 0.72);
+  --chrome-blur: 28px;
+  --chrome-edge: oklch(1 0 0 / 0.08);
+
+  /* Shadows barely register on a dark page; depth comes from the lit top edge. */
+  --elevation-1:
+    inset 0 1px 0 oklch(1 0 0 / 0.04), 0 1px 2px oklch(0 0 0 / 0.5);
+  --elevation-2:
+    inset 0 1px 0 oklch(1 0 0 / 0.05), 0 12px 28px -12px oklch(0 0 0 / 0.7);
+  --elevation-3:
+    inset 0 1px 0 oklch(1 0 0 / 0.06), 0 32px 64px -24px oklch(0 0 0 / 0.8);
+  --hairline: oklch(1 0 0 / 0.1);
 
   --grammar: oklch(0.8077 0.1035 19.57); /* #FCA5A5 — 9.44:1 on card */
   --grammar-tint: oklch(0.2976 0.0689 22.15); /* #4A1D1D */
@@ -121,6 +215,8 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Optical sizing where the face supports it; SF and Segoe both do. */
+    font-optical-sizing: auto;
   }
   button:not(:disabled),
   [role="button"]:not(:disabled) {
@@ -128,13 +224,158 @@
   }
   html {
     @apply font-sans;
+    /* Layout spacing is in rem, so a larger text setting scales the page with it. */
+    font-size: 100%;
   }
+  /*
+   * Type: tracking and leading are size-specific. Large text needs negative
+   * tracking and tight leading, body text sits near zero, small text opens up
+   * slightly. One fixed letter-spacing would be wrong somewhere.
+   */
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.015em;
+  }
+}
+
+@utility text-display {
+  font-size: clamp(1.75rem, 1.25rem + 2.2vw, 2.75rem);
+  line-height: 1.06;
+  letter-spacing: -0.03em;
+  font-weight: 600;
+}
+
+@utility text-title {
+  font-size: clamp(1.0625rem, 1rem + 0.3vw, 1.1875rem);
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  font-weight: 600;
+}
+
+/* Small, quiet, and slightly opened up so it stays legible at 13px. */
+@utility text-label {
+  font-size: 0.8125rem;
+  line-height: 1.3;
+  letter-spacing: 0.005em;
+  font-weight: 500;
+}
+
+@utility text-caption {
+  font-size: 0.75rem;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+}
+
+/*
+ * A floating translucent layer. Content scrolls underneath it rather than being
+ * pushed aside by an opaque strip.
+ */
+@utility material-chrome {
+  background-color: var(--chrome);
+  -webkit-backdrop-filter: blur(var(--chrome-blur)) saturate(180%);
+  backdrop-filter: blur(var(--chrome-blur)) saturate(180%);
+}
+
+/* An opaque content surface: elevation instead of an outline. */
+@utility surface {
+  background-color: var(--card);
+  box-shadow: var(--elevation-2);
+}
+
+@utility hairline-t {
+  border-top: 1px solid var(--hairline);
+}
+
+@utility hairline-b {
+  border-bottom: 1px solid var(--hairline);
+}
+
+/*
+ * Press feedback. It fires on pointer-down, not on release — waiting for the
+ * click to acknowledge a tap is the single fastest way to feel dead.
+ */
+@utility press {
+  transition: transform var(--duration-press) var(--ease-spring-snappy);
+  &:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+}
+
+/*
+ * Surfaces arrive as a material — blur and scale resolving together — rather
+ * than a flat opacity fade, so they read as something forming rather than
+ * something appearing.
+ */
+@keyframes materialize {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0) scale(0.985);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@utility materialize {
+  animation: materialize var(--duration-spring) var(--ease-spring) both;
+  will-change: transform, opacity, filter;
+}
+
+/* Momentum earned the overshoot: this one lands after a completed action. */
+@utility pop-in {
+  animation: materialize var(--duration-spring-bounce) var(--ease-spring-bounce)
+    both;
+}
+
+/*
+ * Scroll edge effect: the hairline under floating chrome exists only while
+ * content is actually passing beneath it.
+ */
+@utility scroll-edge {
+  &::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    top: 100%;
+    height: 1px;
+    background: var(--hairline);
+    opacity: 0;
+    transition: opacity var(--duration-spring-snappy) var(--ease-spring);
+  }
+  &[data-scrolled="true"]::after {
+    opacity: 1;
+  }
+}
+
+/* Eases the whole page across a theme flip instead of jump-cutting the brightness. */
+.theme-shift *,
+.theme-shift *::before,
+.theme-shift *::after {
+  transition:
+    background-color 260ms var(--ease-spring),
+    border-color 260ms var(--ease-spring),
+    color 260ms var(--ease-spring),
+    box-shadow 260ms var(--ease-spring) !important;
 }
 
 /*
  * prefers-reduced-motion: strip transitions and animation rather than merely
  * shortening them, but keep them non-zero so transitionend/animationend still
- * fire for anything that depends on them.
+ * fire for anything that depends on them. Motion that carries meaning is
+ * replaced by a cross-fade rather than removed — reduced does not mean absent.
  */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -144,5 +385,50 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+  .materialize,
+  .pop-in {
+    animation: fade-in 180ms ease both !important;
+  }
+  .theme-shift *,
+  .theme-shift *::before,
+  .theme-shift *::after {
+    transition: none !important;
+  }
+}
+
+/* Translucency is a preference, not a requirement: make the material solid. */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --chrome: oklch(0.9702 0.0021 264.54);
+    --chrome-blur: 0px;
+  }
+  .dark {
+    --chrome: oklch(0.1448 0.0041 264.54);
+  }
+  .material-chrome {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+/* Near-solid backgrounds and a defined border on every floating surface. */
+@media (prefers-contrast: more) {
+  :root {
+    --chrome: oklch(0.9702 0.0021 264.54);
+    --chrome-blur: 0px;
+    --muted-foreground: oklch(0.42 0.008 264.54);
+    --border: oklch(0.72 0.006 264.54);
+    --hairline: oklch(0.16 0.004 264.54 / 0.28);
+  }
+  .dark {
+    --chrome: oklch(0.1448 0.0041 264.54);
+    --muted-foreground: oklch(0.82 0.008 264.54);
+    --border: oklch(1 0 0 / 0.32);
+    --hairline: oklch(1 0 0 / 0.3);
+  }
+  .surface,
+  .material-chrome {
+    outline: 1px solid var(--border);
   }
 }
