@@ -1,16 +1,11 @@
 import { NextResponse } from "next/server";
-import { reconcileErrors, applyFixes } from "@/lib/errors";
-import {
-  GeminiApiError,
-  GeminiParseError,
-  requestGrammarCheck,
-} from "@/lib/gemini";
-import {
-  MAX_CONTENT_LENGTH,
-  MAX_CONTEXT_LENGTH,
-  type CheckErrorResponse,
-  type CheckResponse,
-} from "@/lib/types";
+import { applyFixes } from "@/lib/errors";
+import { requestGrammarCheck } from "@/lib/gemini";
+import { GeminiParseError } from "@/lib/gemini-errors";
+import { reconcileErrors } from "@/lib/reconcile";
+import type { CheckErrorResponse, CheckResponse } from "@/lib/types";
+import { fail, failureResponse } from "./failures";
+import { parseCheckRequest } from "./request";
 
 /**
  * POST /api/check — see specs/core.md §4.
@@ -20,22 +15,6 @@ import {
 
 // Always run at request time; there is nothing here worth prerendering.
 export const dynamic = "force-dynamic";
-
-function fail(
-  status: number,
-  error: string,
-  retryAfterSeconds?: number,
-): NextResponse<CheckErrorResponse> {
-  return NextResponse.json(
-    retryAfterSeconds ? { error, retryAfterSeconds } : { error },
-    {
-      status,
-      headers: retryAfterSeconds
-        ? { "Retry-After": String(retryAfterSeconds) }
-        : undefined,
-    },
-  );
-}
 
 export async function POST(
   request: Request,
@@ -47,73 +26,21 @@ export async function POST(
     return fail(500, "The grammar service is not configured.");
   }
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return fail(400, "Request body must be valid JSON.");
-  }
-
-  if (typeof body !== "object" || body === null) {
-    return fail(400, "Request body must be a JSON object.");
-  }
-
-  const { content, context } = body as { content?: unknown; context?: unknown };
-
-  if (typeof content !== "string" || !content.trim()) {
-    return fail(400, "Add some text to check.");
-  }
-  if (content.length > MAX_CONTENT_LENGTH) {
-    return fail(
-      400,
-      `Text is ${content.length.toLocaleString()} characters; the limit is ${MAX_CONTENT_LENGTH.toLocaleString()}.`,
-    );
-  }
-  if (context !== undefined && typeof context !== "string") {
-    return fail(400, "Context must be text.");
-  }
-  if (typeof context === "string" && context.length > MAX_CONTEXT_LENGTH) {
-    return fail(400, `Context is limited to ${MAX_CONTEXT_LENGTH} characters.`);
-  }
-
-  const trimmedContext = typeof context === "string" ? context.trim() : undefined;
+  const parsed = await parseCheckRequest(request);
+  if (!parsed.ok) return fail(400, parsed.error);
+  const { content, context } = parsed;
 
   // One retry, because a malformed generation is usually transient.
   let raw;
   try {
     try {
-      raw = await requestGrammarCheck(content, trimmedContext, apiKey, request.signal);
+      raw = await requestGrammarCheck(content, context, apiKey, request.signal);
     } catch (first) {
       if (!(first instanceof GeminiParseError)) throw first;
-      raw = await requestGrammarCheck(content, trimmedContext, apiKey, request.signal);
+      raw = await requestGrammarCheck(content, context, apiKey, request.signal);
     }
   } catch (cause) {
-    if (cause instanceof Error && cause.name === "AbortError") {
-      // The client navigated away or pressed Check again; nothing to report.
-      return fail(499, "Request cancelled.");
-    }
-    if (cause instanceof GeminiParseError) {
-      return fail(500, "The grammar service returned an unreadable result. Try again.");
-    }
-    if (cause instanceof GeminiApiError) {
-      if (cause.status === 429) {
-        return fail(
-          429,
-          "The free tier is rate limited right now. Wait a moment and try again.",
-          cause.retryAfterSeconds ?? 30,
-        );
-      }
-      if (cause.status === 401 || cause.status === 403) {
-        console.error("Gemini rejected the API key.");
-        return fail(500, "The grammar service is not configured correctly.");
-      }
-      if (cause.status === 413 || cause.status === 422) {
-        return fail(cause.status, cause.message);
-      }
-      return fail(502, "The grammar service is unavailable. Try again shortly.");
-    }
-    console.error("Unexpected failure in /api/check.");
-    return fail(500, "Something went wrong. Try again.");
+    return failureResponse(cause);
   }
 
   // Trust the text, not the model's offsets.
