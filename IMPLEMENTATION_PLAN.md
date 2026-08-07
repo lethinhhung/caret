@@ -35,9 +35,11 @@ against the untouched `page.test.tsx` before it was split for the cap.
 **Goal**: the data layer, with no UI attached.
 - `src/lib/history.ts` — `HistoryEntry`, the versioned file envelope,
   `MAX_ENTRIES`, and pure `parse` / `add` / `serialize`. No `localStorage`.
-- `src/lib/history-store.ts` — the only module that touches `localStorage`.
-  Module-level store with `subscribe` / `getSnapshot` / `getServerSnapshot`,
-  the enabled flag, and record / update / remove / clear.
+- `src/lib/history-storage.ts` — the only module that touches `localStorage`.
+  Read, write, and the quota retry, each access wrapped.
+- `src/lib/history-store.ts` — module-level store with `subscribe` /
+  `getSnapshot` / `getServerSnapshot`, the enabled flag, and record / update /
+  remove / clear.
 
 `corrected` is not stored: `applyFixes(content, errors, accepted)` rebuilds it
 exactly, so keeping it would only add bulk and a way for the two to disagree.
@@ -59,7 +61,11 @@ exactly, so keeping it would only add bulk and a way for the two to disagree.
 - A `localStorage` getter that throws leaves the store disabled, not crashed
 - A `storage` event from another tab updates the snapshot
 
-**Status**: Not Started
+**Status**: Complete — 28 tests over three files. The storage adapter came out
+as its own module: one file holding both the `localStorage` quirks and the
+snapshot rules ran to 146 lines. `writeEnabled` reports whether the flag landed,
+so a device that refuses storage leaves the switch off rather than looking on
+and quietly storing nothing.
 
 ## Stage 3: The panel, and the switch that is off
 
