@@ -3,28 +3,32 @@
 Implements `specs/core.md` §5: opt-in, browser-local history of past checks.
 Branch `feat/history` off `main`.
 
-Stage 1 exists because `CLAUDE.md` caps files at 120 lines and `page.tsx` is
-currently 531. History has to edit that file, so it gets split first — as its
-own step, with no behaviour change, so the split and the feature never have to
-be reviewed as one diff.
+Stage 1 exists because `CLAUDE.md` caps files at 120 lines and `page.tsx` was
+531. History has to edit that file, so it got split first — as its own step,
+with no behaviour change, so the split and the feature never have to be
+reviewed as one diff.
 
 ## Stage 1: Split the main screen
 
 **Goal**: `src/app/page.tsx` under 120 lines, holding composition and check
-state only. The composer form, the two results cards, and the small
-presentational helpers (`CountRing`, `Kbd`, `StaleNotice`, `ResultsSkeleton`)
-each move to their own file under `src/components/`.
+state only. The request lifecycle and the clipboard move to hooks; the form,
+the two results cards, and the small presentational helpers each move to
+their own file under `src/components/`.
 
 **Success Criteria**:
 - `page.tsx` ≤ 120 lines; every extracted file ≤ 120 lines
-- The existing 98 tests pass **unmodified** — that is what proves the split
+- The existing 82 tests pass **unmodified** — that is what proves the split
   changed nothing. A test that needs editing means behaviour moved.
 - `npm run typecheck`, `npm run lint` clean
 
 **Tests**: none added. The current suite is the safety net; `page.test.tsx`
 drives the real screen and would catch a broken wire-up.
 
-**Status**: Not Started
+**Status**: Complete — `page.tsx` is 79 lines. `useGrammarCheck` and `useCopy`
+under `src/hooks/`; `CheckForm`, `CheckStatus`, `CheckResults`, `IssuesCard`,
+`CleanCard`, `CopyButton`, `StaleNotice`, `ResultsSkeleton`, `CheckFailure`,
+`SiteHeader`, `ShortcutHint` under `src/components/`. All 82 tests passed
+against the untouched `page.test.tsx` before it was split for the cap.
 
 ## Stage 2: Storage core
 
@@ -96,7 +100,7 @@ stored." copy conditional on the switch.
 - Restoring an entry repopulates context, content, and the results card
 - Touched files stay ≤ 120 lines
 
-**Tests** (`history-panel.test.tsx`, additions to `page.test.tsx`):
+**Tests** (`history-panel.test.tsx`, additions to the `page.*.test.tsx` suites):
 - Check with history on → one entry; with it off → none
 - A 500 response records nothing
 - Reverting a fix, then reopening the entry, shows that fix still reverted
@@ -108,21 +112,14 @@ stored." copy conditional on the switch.
 
 ## Notes
 
-**Pre-existing 120-line violations.** Nine files are over today. Stage 1 handles
-`page.tsx` because history must edit it. The rest are untouched by this feature
-and are left alone rather than smuggled into this branch:
+**The nine pre-existing violations are all cleared** on
+`refactor/120-line-rule`, tests included, so history starts from a tree that
+already meets the cap. Each split landed as its own commit against a passing
+suite. Shared test data lives in `*.fixtures.ts(x)` files, which `vitest`'s
+`src/**/*.test.{ts,tsx}` glob does not collect as suites.
 
-```
-317  src/app/api/check/route.test.ts    198  src/lib/errors.ts
-242  src/app/page.test.tsx              197  src/lib/errors.test.ts
-204  src/lib/gemini.ts                  184  src/components/annotated-text.tsx
-147  src/app/api/check/route.ts         145  src/components/annotated-text.test.tsx
-```
-
-Four are test files. Whether the cap is meant to bind tests as tightly as
-application code is worth deciding before anyone splits those.
-
-**`feat/visual-refresh` will conflict.** That branch rewrites `page.tsx` into a
-642-line file — also over the cap. Whichever branch merges second resolves by
-re-applying its changes onto the other's markup. Stage 1 shrinks the surface
-this branch contributes to that conflict, but does not remove it.
+**`feat/visual-refresh` will conflict badly.** That branch rewrites `page.tsx`
+into a 642-line file — also over the cap — against the 531-line original, while
+this one leaves 79 lines of entirely different structure. There is no useful
+three-way merge there: the visual work has to be re-applied onto the split
+components, card by card.
