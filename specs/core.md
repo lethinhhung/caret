@@ -150,7 +150,8 @@ src/components/annotated-text.tsx — highlight + popover rendering
 src/components/history-panel.tsx  — history sheet, switch, entry list
 src/lib/gemini.ts           — prompt, schema, response parsing
 src/lib/history.ts          — history types + pure parse/cap/serialize
-src/lib/history-store.ts    — the only module that touches localStorage
+src/lib/history-storage.ts  — the only module that touches localStorage
+src/lib/history-store.ts    — subscribable history snapshot for the panel
 src/lib/types.ts            — shared request/response types
 specs/core.md               — this document
 ```

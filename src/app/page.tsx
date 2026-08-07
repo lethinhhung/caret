@@ -7,6 +7,7 @@ import { CheckStatus } from "@/components/check-status";
 import { SiteHeader } from "@/components/site-header";
 import { useCopy } from "@/hooks/use-copy";
 import { useGrammarCheck } from "@/hooks/use-grammar-check";
+import type { HistoryEntry } from "@/lib/history";
 
 export default function Home() {
   const [context, setContext] = useState("");
@@ -16,7 +17,7 @@ export default function Home() {
   const clipboard = useCopy();
   const resultsRef = useRef<HTMLDivElement>(null);
 
-  const { isChecking, outcome, failure, run } = check;
+  const { isChecking, outcome, failure, restore, run } = check;
   const { clear } = clipboard;
 
   // A new check makes any standing "Copied" confirmation stale.
@@ -24,6 +25,17 @@ export default function Home() {
     clear();
     void run();
   }, [clear, run]);
+
+  // Opening a stored check puts the composer back the way it was for it.
+  const reopen = useCallback(
+    (entry: HistoryEntry) => {
+      clear();
+      setContext(entry.context ?? "");
+      setContent(entry.content);
+      restore(entry);
+    },
+    [clear, restore],
+  );
 
   // Cmd/Ctrl+Enter from anywhere on the page, including inside the textareas.
   useEffect(() => {
@@ -49,7 +61,7 @@ export default function Home() {
 
   return (
     <>
-      <SiteHeader />
+      <SiteHeader onRestore={reopen} />
 
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 sm:py-8">
         <CheckForm

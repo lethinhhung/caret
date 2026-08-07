@@ -1,8 +1,14 @@
+import { HistoryPanel } from "@/components/history-panel";
 import { ThemeToggle } from "@/components/theme-toggle";
+import type { HistoryEntry } from "@/lib/history";
 import { SITE_TAGLINE } from "@/lib/site";
 
 /** The app's name, what it does, and the controls that apply to the whole page. */
-export function SiteHeader() {
+export function SiteHeader({
+  onRestore,
+}: {
+  onRestore: (entry: HistoryEntry) => void;
+}) {
   return (
     <header className="border-b border-border">
       <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
@@ -12,7 +18,10 @@ export function SiteHeader() {
           </h1>
           <p className="text-sm text-muted-foreground">{SITE_TAGLINE}</p>
         </div>
-        <ThemeToggle />
+        <div className="flex shrink-0 items-center gap-1">
+          <HistoryPanel onRestore={onRestore} />
+          <ThemeToggle />
+        </div>
       </div>
     </header>
   );

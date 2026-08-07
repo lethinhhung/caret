@@ -3,6 +3,7 @@
 import { CheckFailure } from "@/components/check-failure";
 import { CleanCard } from "@/components/clean-card";
 import { IssuesCard } from "@/components/issues-card";
+import { ResultsPlaceholder } from "@/components/results-placeholder";
 import { ResultsSkeleton } from "@/components/results-skeleton";
 import type { Clipboard } from "@/hooks/use-copy";
 import type { GrammarCheck } from "@/hooks/use-grammar-check";
@@ -37,13 +38,7 @@ export function CheckResults({
     );
   }
 
-  if (!outcome) {
-    return (
-      <p className="text-sm text-muted-foreground">
-        Results appear here. Nothing you type is stored.
-      </p>
-    );
-  }
+  if (!outcome) return <ResultsPlaceholder />;
 
   if (outcome.result.status !== "has_errors") {
     return (
