@@ -19,7 +19,8 @@ import {
   TriangleAlert,
   WandSparkles,
 } from "lucide-react";
-import { AnnotatedText, CategoryLegend } from "@/components/annotated-text";
+import { AnnotatedText } from "@/components/annotated-text";
+import { CategoryLegend } from "@/components/category-legend";
 import { DiffView } from "@/components/diff-view";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";

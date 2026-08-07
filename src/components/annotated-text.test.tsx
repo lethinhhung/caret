@@ -1,31 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { AnnotatedText, CategoryLegend } from "./annotated-text";
+import { AnnotatedText } from "./annotated-text";
+import { CONTENT, ERRORS, WENT } from "./annotated-text.fixtures";
 import { errorId } from "@/lib/errors";
 import type { GrammarError } from "@/lib/types";
-
-const CONTENT = "I have went to the store and it was'nt open.";
-
-const WENT: GrammarError = {
-  original: "went",
-  suggestion: "gone",
-  category: "grammar",
-  explanation: "Use the past participle after 'have'.",
-  start: 7,
-  end: 11,
-};
-
-const WASNT: GrammarError = {
-  original: "was'nt",
-  suggestion: "wasn't",
-  category: "spelling",
-  explanation: "The apostrophe belongs before the t.",
-  start: 32,
-  end: 38,
-};
-
-const ERRORS = [WENT, WASNT];
 
 function renderAnnotated(applied: string[] = [], onToggle = vi.fn()) {
   render(
@@ -131,15 +110,5 @@ describe("AnnotatedText", () => {
       />,
     );
     expect(container.textContent).toBe(CONTENT);
-  });
-});
-
-describe("CategoryLegend", () => {
-  it("lists only the categories present, with counts", () => {
-    render(<CategoryLegend errors={[WENT, WASNT, { ...WENT, start: 0, end: 1 }]} />);
-
-    expect(screen.getByText("Grammar").parentElement).toHaveTextContent("Grammar 2");
-    expect(screen.getByText("Spelling").parentElement).toHaveTextContent("Spelling 1");
-    expect(screen.queryByText("Punctuation")).not.toBeInTheDocument();
   });
 });
