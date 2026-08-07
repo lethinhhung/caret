@@ -1,11 +1,8 @@
 import { NextResponse } from "next/server";
 import { applyFixes } from "@/lib/errors";
 import { reconcileErrors } from "@/lib/reconcile";
-import {
-  GeminiApiError,
-  GeminiParseError,
-  requestGrammarCheck,
-} from "@/lib/gemini";
+import { requestGrammarCheck } from "@/lib/gemini";
+import { GeminiApiError, GeminiParseError } from "@/lib/gemini-errors";
 import {
   MAX_CONTENT_LENGTH,
   MAX_CONTEXT_LENGTH,
