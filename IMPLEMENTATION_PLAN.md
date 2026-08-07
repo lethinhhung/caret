@@ -90,7 +90,11 @@ on, and switched back off.
 - Turning it off asks first, and purges once confirmed
 - Enabled with no entries shows the empty state
 
-**Status**: Not Started
+**Status**: Complete — `HistoryPanel` in the header, `HistorySwitch` inside it.
+The confirm is inline in the panel rather than a nested dialog, which keeps
+`alert-dialog` out of the tree and the focus trap singular. It asks whether or
+not anything is stored: a switch that sometimes stops to ask and sometimes does
+not is harder to trust than one that always does.
 
 ## Stage 4: Recording and restore
 

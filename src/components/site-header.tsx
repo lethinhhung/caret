@@ -1,3 +1,4 @@
+import { HistoryPanel } from "@/components/history-panel";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SITE_TAGLINE } from "@/lib/site";
 
@@ -12,7 +13,10 @@ export function SiteHeader() {
           </h1>
           <p className="text-sm text-muted-foreground">{SITE_TAGLINE}</p>
         </div>
-        <ThemeToggle />
+        <div className="flex shrink-0 items-center gap-1">
+          <HistoryPanel />
+          <ThemeToggle />
+        </div>
       </div>
     </header>
   );
