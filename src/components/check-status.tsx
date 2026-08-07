@@ -1,4 +1,4 @@
-import type { Outcome } from "@/hooks/use-grammar-check";
+import type { Outcome } from "@/lib/outcome";
 
 /**
  * The results region, announced.

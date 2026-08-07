@@ -118,7 +118,12 @@ stored." copy conditional on the switch.
 - Deleting an entry removes only that one
 - Empty-state copy differs between switch states
 
-**Status**: Not Started
+**Status**: Complete — 130 tests. `useGrammarCheck` was split first, into
+`useAppliedFixes` (the kept-fixes set), `requestCheck` (the round trip), and
+`outcomeFromEntry` (a stored check rebuilt), which left room for `restore` and
+kept every file under the cap. An outcome carries the id of the entry it was
+stored as, so `useAcceptedSync` knows what to keep current and a restored check
+updates its own entry instead of recording a duplicate.
 
 ## Notes
 

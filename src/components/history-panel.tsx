@@ -1,6 +1,8 @@
 "use client";
 
 import { History } from "lucide-react";
+import { useState } from "react";
+import { HistoryList } from "@/components/history-list";
 import { HistorySwitch } from "@/components/history-switch";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +14,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { useHistory } from "@/hooks/use-history";
+import type { HistoryEntry } from "@/lib/history";
 
 /**
  * Past checks, and the switch that decides whether there are any.
@@ -20,11 +23,22 @@ import { useHistory } from "@/hooks/use-history";
  * composer is never unmounted to look something up. It is reachable whether
  * history is on or off — that is how the feature gets found at all.
  */
-export function HistoryPanel() {
+export function HistoryPanel({
+  onRestore,
+}: {
+  onRestore: (entry: HistoryEntry) => void;
+}) {
   const { enabled, entries } = useHistory();
+  const [open, setOpen] = useState(false);
+
+  // Reading an old check is the end of the visit to the panel, not the middle.
+  function openEntry(entry: HistoryEntry) {
+    onRestore(entry);
+    setOpen(false);
+  }
 
   return (
-    <Sheet>
+    <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button
           type="button"
@@ -32,7 +46,7 @@ export function HistoryPanel() {
           className="h-11 gap-2 rounded-full px-4"
         >
           <History className="size-5" aria-hidden />
-          History
+          History{" "}
           {entries.length > 0 && (
             <span className="rounded-full bg-muted px-2 py-0.5 text-xs tabular-nums">
               {entries.length}
@@ -54,11 +68,7 @@ export function HistoryPanel() {
         <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4">
           <HistorySwitch enabled={enabled} count={entries.length} />
 
-          {enabled && entries.length === 0 && (
-            <p className="text-sm text-muted-foreground">
-              No checks yet. The next one you run will appear here.
-            </p>
-          )}
+          {enabled && <HistoryList entries={entries} onOpen={openEntry} />}
         </div>
       </SheetContent>
     </Sheet>
