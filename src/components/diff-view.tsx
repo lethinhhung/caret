@@ -1,19 +1,29 @@
 "use client";
 
-import { diffWords } from "@/lib/diff";
+import { CATEGORY_STYLES } from "@/lib/categories";
+import { diffFromErrors } from "@/lib/diff";
+import type { GrammarError } from "@/lib/types";
+import { cn } from "@/lib/utils";
+
+interface DiffViewProps {
+  /** The text exactly as it was checked, which the errors index into. */
+  content: string;
+  errors: GrammarError[];
+  applied: ReadonlySet<string>;
+}
 
 /**
- * Word-level diff between the submitted text and the current corrected text.
+ * The submitted text with every applied fix shown as what came out and what
+ * went in, each coloured by its error category.
  *
- * `del`/`ins` carry the meaning semantically; the tint and the strike-through
- * repeat it visually, and the screen-reader-only labels repeat it in speech —
- * so nothing here depends on colour.
+ * `del`/`ins` carry the meaning semantically; the category tint and the
+ * strike-through / underline repeat it visually, and the screen-reader-only
+ * labels repeat it in speech — so nothing here depends on colour.
  */
-export function DiffView({ before, after }: { before: string; after: string }) {
-  const parts = diffWords(before, after);
-  const unchanged = parts.every((part) => part.op === "equal");
+export function DiffView({ content, errors, applied }: DiffViewProps) {
+  const parts = diffFromErrors(content, errors, applied);
 
-  if (unchanged) {
+  if (parts.every((part) => part.op === "equal")) {
     return (
       <p className="text-sm text-muted-foreground">
         Nothing is applied right now, so the text is unchanged.
@@ -26,13 +36,18 @@ export function DiffView({ before, after }: { before: string; after: string }) {
       {parts.map((part, index) => {
         if (part.op === "equal") return <span key={index}>{part.text}</span>;
 
+        const style = CATEGORY_STYLES[part.error.category];
+
         if (part.op === "delete") {
           return (
             <del
               key={index}
-              className="rounded-sm bg-grammar-tint px-0.5 text-foreground decoration-grammar decoration-2"
+              className={cn(
+                "rounded-sm px-0.5 text-muted-foreground line-through decoration-2",
+                style.badge,
+              )}
             >
-              <span className="sr-only">removed: </span>
+              <span className="sr-only">{style.label} fix removed: </span>
               {part.text}
             </del>
           );
@@ -41,9 +56,12 @@ export function DiffView({ before, after }: { before: string; after: string }) {
         return (
           <ins
             key={index}
-            className="rounded-sm bg-secondary px-0.5 text-secondary-foreground no-underline"
+            className={cn(
+              "rounded-sm px-0.5 text-foreground underline decoration-2 underline-offset-4",
+              style.mark,
+            )}
           >
-            <span className="sr-only">added: </span>
+            <span className="sr-only">{style.label} fix added: </span>
             {part.text}
           </ins>
         );
