@@ -1,4 +1,5 @@
 import { beforeEach, afterEach, vi } from "vitest";
+import { checkLimiter } from "./rate-limit";
 import { POST } from "./route";
 
 /**
@@ -18,10 +19,11 @@ export function geminiOk(payload: unknown, finishReason = "STOP") {
   );
 }
 
-export const post = (body: unknown) =>
+export const post = (body: unknown, headers?: HeadersInit) =>
   POST(
     new Request("http://localhost/api/check", {
       method: "POST",
+      headers,
       body: typeof body === "string" ? body : JSON.stringify(body),
     }),
   );
@@ -31,6 +33,7 @@ export function stubApiKey() {
   const originalKey = process.env.GEMINI_API_KEY;
 
   beforeEach(() => {
+    checkLimiter.reset();
     process.env.GEMINI_API_KEY = "test-key";
     vi.spyOn(console, "error").mockImplementation(() => {});
   });

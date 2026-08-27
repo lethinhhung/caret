@@ -5,12 +5,14 @@ import { GeminiParseError } from "@/lib/gemini-errors";
 import { reconcileErrors } from "@/lib/reconcile";
 import type { CheckErrorResponse, CheckResponse } from "@/lib/types";
 import { fail, failureResponse } from "./failures";
+import { checkLimiter, clientKey } from "./rate-limit";
 import { parseCheckRequest } from "./request";
 
 /**
  * POST /api/check — see specs/core.md §4.
  *
- * Stateless. The API key stays on the server and user text is never logged.
+ * The API key stays on the server and user text is never logged. The only
+ * state is the per-IP rate limit, which holds counts and nothing else.
  */
 
 // Always run at request time; there is nothing here worth prerendering.
@@ -24,6 +26,16 @@ export async function POST(
     // A config problem, not a user problem — say so without leaking specifics.
     console.error("GEMINI_API_KEY is not set; /api/check cannot run.");
     return fail(500, "The grammar service is not configured.");
+  }
+
+  // Before reading the body: a blocked caller should cost us nothing.
+  const limit = checkLimiter.hit(clientKey(request));
+  if (!limit.ok) {
+    return fail(
+      429,
+      "Too many checks from your connection. Wait a moment and try again.",
+      limit.retryAfterSeconds,
+    );
   }
 
   const parsed = await parseCheckRequest(request);

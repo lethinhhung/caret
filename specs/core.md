@@ -92,8 +92,11 @@ Response:
 - Prompt asks for strict JSON (`responseMimeType: application/json` +
   `responseSchema`). Offsets (`start`/`end`) index into the original content;
   the server validates offsets and drops errors that don't match the text.
-- Errors: `400` empty/oversized content, `429` rate limit passthrough with a
-  friendly retry message, `500` malformed model output after one retry.
+- Per-IP rate limit of 10 checks/minute and 100/day, applied before the body is
+  read. Counted in process, so it is a soft ceiling across serverless instances.
+- Errors: `400` empty/oversized content, `429` per-IP limit or Gemini rate limit
+  passthrough with a friendly retry message, `500` malformed model output after
+  one retry.
 
 ## 5. History (opt-in, browser-local)
 
