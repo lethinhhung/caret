@@ -77,8 +77,9 @@ export function IssuesCard({
             <p className="text-base leading-8 whitespace-pre-wrap">{corrected}</p>
           </TabsContent>
 
-          <TabsContent value="diff">
-            <DiffView before={content} after={corrected} />
+          <TabsContent value="diff" className="flex flex-col gap-3">
+            <CategoryLegend errors={errors} />
+            <DiffView content={content} errors={errors} applied={applied} />
           </TabsContent>
         </Tabs>
       </CardContent>
