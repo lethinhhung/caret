@@ -45,9 +45,10 @@ export function ErrorSpan({
         className={cn(
           "inline cursor-pointer rounded-sm px-0.5 underline decoration-2 underline-offset-4 transition-colors",
           "focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-2 focus-visible:outline-ring",
-          isApplied
-            ? "bg-secondary text-secondary-foreground decoration-primary decoration-solid"
-            : style.mark,
+          // Both states keep the category colour; the tint marks an applied fix
+          // and a reverted one sits with only its underline, so "which
+          // category" and "is it applied" never compete for the same signal.
+          isApplied ? style.mark : cn(style.rule, "text-muted-foreground"),
         )}
         aria-label={
           isApplied

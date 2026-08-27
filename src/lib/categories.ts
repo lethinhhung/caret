@@ -9,11 +9,11 @@ import type { ErrorCategory } from "./types";
  */
 export interface CategoryStyle {
   label: string;
-  /** Highlight applied to an inline span whose fix is not applied. */
+  /** Tint plus underline for an inline span whose fix is applied. */
   mark: string;
   /** Badge shown in the popover and the legend. */
   badge: string;
-  /** Underline treatment on its own, for the legend swatch. */
+  /** Underline on its own: the legend swatch and a reverted fix. */
   rule: string;
 }
 
