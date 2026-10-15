@@ -86,7 +86,12 @@ export async function requestGrammarCheck(
       signal,
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-        contents: [{ role: "user", parts: [{ text: buildPrompt(content, context) }] }],
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: buildPrompt(context) }, { text: content }],
+          },
+        ],
         generationConfig: {
           responseMimeType: "application/json",
           responseSchema,
