@@ -19,7 +19,7 @@ function formatSummary(value: string) {
 export async function summarizeWeeklyActivities(period: string, entries: string[]) {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new Error("Gemini is not configured.");
-  const prompt = `Summarize these GitHub activities for ${period} in at most 3 short bullet points focused on actions and outcomes. Keep each bullet under 220 characters. Omit dates, time ranges, and headings. Use only supplied facts; do not invent or infer.\n\n${entries.join("\n")}`;
+  const prompt = `Summarize these GitHub activities for ${period} in at most 3 short bullet points focused on actions and outcomes. Keep each bullet under 220 characters. Use **bold** for key outcomes, *italics* for project names or themes, and ++underline++ for one standout result when useful. Omit dates, time ranges, headings, and HTML. Use only supplied facts; do not invent or infer.\n\n${entries.join("\n")}`;
   const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-goog-api-key": key },
